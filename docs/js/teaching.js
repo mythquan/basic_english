@@ -124,7 +124,7 @@ function updateCards() {
 
   grid.innerHTML = pageWords.map(item => {
     const cat = item.category
-    return `<div class="word-card" style="border-color:${cat.color}">
+    return `<div class="word-card" style="border-color:${cat.color}" onclick="BE.teaching.showWordDetail('${item.word}')">
       <div class="word-card-word">${item.word}</div>
       <div class="word-card-cat" style="background:${cat.color}">${cat.name}</div>
     </div>`
@@ -472,11 +472,38 @@ function renderReference(container) {
   `
 }
 
+// ============================================================
+// WORD DETAIL MODAL (Chinese Translation)
+// ============================================================
+function showWordDetail(word) {
+  const cn = window.BE.WORDS.CHINESE_TRANSLATIONS[word]
+  if (!cn) return
+  let catName = 'General'
+  let catColor = '#4f8cff'
+  for (const c of CATEGORIES) {
+    if (c.words.includes(word)) { catName = c.name; catColor = c.color; break }
+  }
+  const existing = document.querySelector('.word-modal')
+  if (existing) existing.remove()
+  const modal = document.createElement('div')
+  modal.className = 'word-modal'
+  modal.innerHTML = `
+    <div class="word-modal-overlay" onclick="this.parentElement.remove()"></div>
+    <div class="word-modal-content">
+      <button class="word-modal-close" onclick="this.closest('.word-modal').remove()">&times;</button>
+      <div class="word-modal-word">${word}</div>
+      <div class="word-modal-cn">${cn}</div>
+      <div class="word-modal-cat" style="background:${catColor}">${catName}</div>
+    </div>
+  `
+  document.body.appendChild(modal)
+}
+
 // ---- EXPORT ----
 window.BE = window.BE || {}
 window.BE.teaching = {
   renderTeaching, switchTab,
   renderWordCards, filterCards, setCategory, updateCards, goPage,
   renderExercises, selectExercise, showExercise, checkAnswer,
-  renderReference
+  renderReference, showWordDetail
 }
