@@ -1,0 +1,11 @@
+﻿# Local dev server
+server/bin/
+server/obj/
+server/*.csproj
+server/Program.cs
+server/*.dll
+
+# OS files
+Thumbs.db
+.DS_Store
+*.user

@@ -1,0 +1,9 @@
+﻿# Build output
+server/bin/
+server/obj/
+server/*.csproj
+server/Program.cs
+
+# OS files
+Thumbs.db
+.DS_Store
