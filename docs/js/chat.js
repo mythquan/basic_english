@@ -150,12 +150,14 @@ function appendMessageDOM(container, msg) {
     warn.textContent = '⚠ Words not in Basic: ' + msg.violations.join(', ')
     div.appendChild(warn)
   }
-  const sound = document.createElement('span')
-  sound.className = 'msg-sound'
-  sound.textContent = '▶'
-  sound.title = 'Listen'
-  sound.onclick = function() { playSentence(msg.content) }
-  div.appendChild(sound)
+  if (window.speechSynthesis) {
+    var sound = document.createElement('span')
+    sound.className = 'msg-sound'
+    sound.textContent = '▶'
+    sound.title = 'Read this out loud'
+    sound.onclick = function() { BE.chat.playSentence(msg.content) }
+    div.appendChild(sound)
+  }
   container.appendChild(div)
   container.scrollTop = container.scrollHeight
 }
@@ -167,8 +169,9 @@ function playSentence(text) {
     var u = new SpeechSynthesisUtterance(text)
     u.lang = 'en-US'
     u.rate = 0.85
+    u.volume = 1
     window.speechSynthesis.speak(u)
-  } catch (e) {}
+  } catch (e) { /* ignore */ }
 }
 
 function escapeHtml(text) {
@@ -308,4 +311,4 @@ function clearChat() {
 
 // ---- EXPORT ----
 window.BE = window.BE || {}
-window.BE.chat = { renderChat, sendMessage, toggleSettings, saveSettings, clearChat, validateInput, selectProvider }
+window.BE.chat = { renderChat, sendMessage, toggleSettings, saveSettings, clearChat, validateInput, selectProvider, playSentence }
