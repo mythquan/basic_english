@@ -150,8 +150,25 @@ function appendMessageDOM(container, msg) {
     warn.textContent = '⚠ Words not in Basic: ' + msg.violations.join(', ')
     div.appendChild(warn)
   }
+  const sound = document.createElement('span')
+  sound.className = 'msg-sound'
+  sound.textContent = '▶'
+  sound.title = 'Listen'
+  sound.onclick = function() { playSentence(msg.content) }
+  div.appendChild(sound)
   container.appendChild(div)
   container.scrollTop = container.scrollHeight
+}
+
+function playSentence(text) {
+  if (!window.speechSynthesis) return
+  try {
+    window.speechSynthesis.cancel()
+    var u = new SpeechSynthesisUtterance(text)
+    u.lang = 'en-US'
+    u.rate = 0.85
+    window.speechSynthesis.speak(u)
+  } catch (e) {}
 }
 
 function escapeHtml(text) {

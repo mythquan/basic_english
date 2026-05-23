@@ -235,12 +235,26 @@ body {
 .chat-welcome .hint { font-size: .85rem; opacity: .7; }
 
 .chat-message {
+  position: relative;
   max-width: 85%;
-  padding: 12px 16px;
+  padding: 12px 32px 12px 16px;
   border-radius: var(--radius);
   font-size: .93rem;
   line-height: 1.5;
 }
+
+.msg-sound {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  cursor: pointer;
+  font-size: .75rem;
+  opacity: .35;
+  transition: opacity .15s, transform .15s;
+  user-select: none;
+}
+
+.msg-sound:hover { opacity: 1; transform: scale(1.2); }
 
 .chat-message.user {
   align-self: flex-end;
