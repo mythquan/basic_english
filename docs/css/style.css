@@ -514,6 +514,19 @@ body {
   line-height: 1.2;
 }
 
+.word-sound {
+  display: inline-block;
+  cursor: pointer;
+  font-size: 1.2rem;
+  margin-right: 8px;
+  color: var(--primary);
+  transition: transform .15s;
+  vertical-align: middle;
+}
+
+.word-sound:hover { transform: scale(1.25); }
+.word-sound:active { transform: scale(.95); }
+
 .word-modal-cn {
   font-size: 1.4rem;
   color: var(--primary);

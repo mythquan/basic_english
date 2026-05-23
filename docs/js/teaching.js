@@ -473,7 +473,7 @@ function renderReference(container) {
 }
 
 // ============================================================
-// WORD DETAIL MODAL (Chinese Translation)
+// WORD DETAIL MODAL (Chinese Translation + Pronunciation)
 // ============================================================
 function showWordDetail(word) {
   const cn = window.BE.WORDS.CHINESE_TRANSLATIONS[word]
@@ -491,12 +491,28 @@ function showWordDetail(word) {
     <div class="word-modal-overlay" onclick="this.parentElement.remove()"></div>
     <div class="word-modal-content">
       <button class="word-modal-close" onclick="this.closest('.word-modal').remove()">&times;</button>
-      <div class="word-modal-word">${word}</div>
+      <div class="word-modal-word">
+        <span class="word-sound" onclick="BE.teaching.playWord('${word}')" title="Listen">&#9654;</span>
+        ${word}
+      </div>
       <div class="word-modal-cn">${cn}</div>
       <div class="word-modal-cat" style="background:${catColor}">${catName}</div>
     </div>
   `
   document.body.appendChild(modal)
+  BE.teaching.playWord(word)
+}
+
+function playWord(word) {
+  if (!window.speechSynthesis) return
+  window.speechSynthesis.cancel()
+  const u = new SpeechSynthesisUtterance(word)
+  u.lang = 'en-US'
+  u.rate = 0.85
+  const voices = window.speechSynthesis.getVoices()
+  const us = voices.find(v => v.lang.startsWith('en-US'))
+  if (us) u.voice = us
+  window.speechSynthesis.speak(u)
 }
 
 // ---- EXPORT ----
@@ -505,5 +521,5 @@ window.BE.teaching = {
   renderTeaching, switchTab,
   renderWordCards, filterCards, setCategory, updateCards, goPage,
   renderExercises, selectExercise, showExercise, checkAnswer,
-  renderReference, showWordDetail
+  renderReference, showWordDetail, playWord
 }
