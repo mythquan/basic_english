@@ -500,19 +500,17 @@ function showWordDetail(word) {
     </div>
   `
   document.body.appendChild(modal)
-  BE.teaching.playWord(word)
 }
 
 function playWord(word) {
   if (!window.speechSynthesis) return
-  window.speechSynthesis.cancel()
-  const u = new SpeechSynthesisUtterance(word)
-  u.lang = 'en-US'
-  u.rate = 0.85
-  const voices = window.speechSynthesis.getVoices()
-  const us = voices.find(v => v.lang.startsWith('en-US'))
-  if (us) u.voice = us
-  window.speechSynthesis.speak(u)
+  try {
+    window.speechSynthesis.cancel()
+    var u = new SpeechSynthesisUtterance(word)
+    u.rate = 0.9
+    u.volume = 1
+    window.speechSynthesis.speak(u)
+  } catch (e) { /* ignore */ }
 }
 
 // ---- EXPORT ----
