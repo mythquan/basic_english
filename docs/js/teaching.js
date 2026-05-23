@@ -20,6 +20,7 @@ function renderTeaching(container) {
       <div class="teaching-tabs">
         <button class="tab-btn active" data-tab="cards" onclick="BE.teaching.switchTab('cards')">📖 Word Cards</button>
         <button class="tab-btn" data-tab="exercises" onclick="BE.teaching.switchTab('exercises')">✏ Rule Exercises</button>
+        <button class="tab-btn" data-tab="spaced" onclick="BE.teaching.switchTab('spaced')">🧠 Spaced Repetition</button>
         <button class="tab-btn" data-tab="reference" onclick="BE.teaching.switchTab('reference')">📚 Quick Reference</button>
       </div>
       <div id="teaching-content" class="teaching-content"></div>
@@ -37,6 +38,7 @@ function switchTab(tab) {
 
   if (tab === 'cards') renderWordCards(content)
   else if (tab === 'exercises') renderExercises(content)
+  else if (tab === 'spaced') renderSR(content)
   else if (tab === 'reference') renderReference(content)
 }
 
@@ -525,11 +527,173 @@ function playWord(word) {
   } catch (e) { /* ignore */ }
 }
 
+// ============================================================
+// SPACED REPETITION (Ebbinghaus)
+// ============================================================
+const SR_INTERVALS = [1, 2, 4, 7, 15, 30]
+const SR_MAX_LEVEL = 6
+const SR_SESSION_SIZE = 50
+const SR_KEY = 'BE_SR'
+const SR_SESSION_KEY = 'BE_SR_SESSION'
+
+function srLoad(key) {
+  try { return JSON.parse(localStorage.getItem(key)) } catch { return null }
+}
+function srSave(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)) } catch {}
+}
+
+function renderSR(container) {
+  var p = srLoad(SR_KEY) || { w: {}, s: { sc: 0, tl: 0, ms: 0 } }
+  var session = srLoad(SR_SESSION_KEY)
+  var now = Date.now()
+  var due = 0
+  for (var k in p.w) { if (p.w[k].nr <= now && p.w[k].l < SR_MAX_LEVEL) due++ }
+  var started = Object.keys(p.w).length
+
+  container.innerHTML =
+    '<div class="sr-section">' +
+      '<div class="sr-header"><h3>Spaced Repetition</h3><p>Master all 850 words with Ebbinghaus forgetting curve.</p></div>' +
+      '<div class="sr-stats">' +
+        '<div class="sr-stat"><span class="sr-stat-num">' + p.s.ms + '</span><span class="sr-stat-label">Mastered</span></div>' +
+        '<div class="sr-stat"><span class="sr-stat-num">' + started + '</span><span class="sr-stat-label">Started</span></div>' +
+        '<div class="sr-stat"><span class="sr-stat-num">' + p.s.sc + '</span><span class="sr-stat-label">Sessions</span></div>' +
+        '<div class="sr-stat"><span class="sr-stat-num">' + due + '</span><span class="sr-stat-label">Due</span></div>' +
+      '</div>' +
+      '<div class="sr-actions">' +
+        (session && session.idx < session.words.length ? '<button class="btn btn-primary" onclick="BE.teaching.srResume()">Continue (' + (session.words.length - session.idx) + ' left)</button>' : '') +
+        '<button class="btn btn-primary" onclick="BE.teaching.srStart()">New Session</button>' +
+        '<button class="btn" onclick="BE.teaching.srReset()">Reset</button>' +
+      '</div>' +
+      '<div id="sr-area"></div>' +
+    '</div>'
+}
+
+function srStart() {
+  var p = srLoad(SR_KEY) || { w: {}, s: { sc: 0, tl: 0, ms: 0 } }
+  var allWords = getFlatWords().map(function(i) { return i.word })
+  var now = Date.now()
+  var review = []
+  var newWords = []
+  for (var i = 0; i < allWords.length; i++) {
+    var w = allWords[i]
+    if (p.w[w]) {
+      if (p.w[w].nr <= now && p.w[w].l < SR_MAX_LEVEL) review.push(w)
+    } else {
+      newWords.push(w)
+    }
+  }
+  // Shuffle
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t } return a }
+  shuffle(review)
+  shuffle(newWords)
+  var selected = review.slice(0, SR_SESSION_SIZE)
+  if (selected.length < SR_SESSION_SIZE) {
+    selected = selected.concat(newWords.slice(0, SR_SESSION_SIZE - selected.length))
+  }
+  shuffle(selected)
+  srSave(SR_SESSION_KEY, { words: selected, idx: 0, answers: [] })
+  srShowCard()
+}
+
+function srResume() {
+  srShowCard()
+}
+
+function srShowCard() {
+  var session = srLoad(SR_SESSION_KEY)
+  if (!session || session.idx >= session.words.length) { srShowSummary(); return }
+  var word = session.words[session.idx]
+  var p = srLoad(SR_KEY) || { w: {}, s: { sc: 0, tl: 0, ms: 0 } }
+  var wp = p.w[word]
+  var cn = window.BE.WORDS.CHINESE_TRANSLATIONS[word] || ''
+  var level = wp ? wp.l : 0
+  var area = document.getElementById('sr-area')
+  if (!area) return
+  area.innerHTML =
+    '<div class="sr-progress"><div class="sr-progress-fill" style="width:' + (session.idx / session.words.length * 100) + '%"></div></div>' +
+    '<div class="sr-progress-text">' + (session.idx + 1) + ' / ' + session.words.length + '</div>' +
+    '<div class="sr-card">' +
+      '<div class="sr-card-word"><span class="word-sound" onclick="BE.teaching.playWord(\'' + word + '\')">&#9654;</span>' + word + '</div>' +
+      '<div class="sr-card-cn">' + cn + '</div>' +
+      '<div class="sr-card-level">Level ' + level + '</div>' +
+    '</div>' +
+    '<div class="sr-buttons">' +
+      '<button class="btn sr-btn-no" onclick="BE.teaching.srAnswer(false)">&#10005; Not Know</button>' +
+      '<button class="btn sr-btn-yes" onclick="BE.teaching.srAnswer(true)">&#10003; Know</button>' +
+    '</div>'
+}
+
+function srAnswer(known) {
+  var session = srLoad(SR_SESSION_KEY)
+  if (!session) return
+  var word = session.words[session.idx]
+  var p = srLoad(SR_KEY) || { w: {}, s: { sc: 0, tl: 0, ms: 0 } }
+  if (!p.w[word]) { p.w[word] = { l: 0, nr: 0, c: 0, w: 0 }; p.s.tl++ }
+  var wp = p.w[word]
+  if (known) {
+    if (wp.l >= SR_MAX_LEVEL) p.s.ms--
+    wp.l = Math.min(wp.l + 1, SR_MAX_LEVEL)
+    wp.c++
+    if (wp.l >= SR_MAX_LEVEL) p.s.ms++
+    var idx = Math.min(wp.l - 1, SR_INTERVALS.length - 1)
+    wp.nr = Date.now() + SR_INTERVALS[idx] * 86400000
+  } else {
+    if (wp.l >= SR_MAX_LEVEL) p.s.ms--
+    wp.l = 0
+    wp.w++
+    wp.nr = Date.now() + 86400000
+  }
+  srSave(SR_KEY, p)
+  session.answers.push({ w: word, k: known })
+  session.idx++
+  if (session.idx >= session.words.length) {
+    p.s.sc++
+    p.s.ls = new Date().toISOString().slice(0, 10)
+    srSave(SR_KEY, p)
+    srSave(SR_SESSION_KEY, session)
+    srShowSummary()
+  } else {
+    srSave(SR_SESSION_KEY, session)
+    srShowCard()
+  }
+}
+
+function srShowSummary() {
+  var session = srLoad(SR_SESSION_KEY)
+  var p = srLoad(SR_KEY) || { w: {}, s: { sc: 0, tl: 0, ms: 0 } }
+  var area = document.getElementById('sr-area')
+  if (!area || !session) return
+  var known = 0
+  for (var i = 0; i < session.answers.length; i++) { if (session.answers[i].k) known++ }
+  var unknown = session.answers.length - known
+  area.innerHTML =
+    '<div class="sr-summary">' +
+      '<h3>Session Complete!</h3>' +
+      '<div class="sr-summary-stats">' +
+        '<div class="sr-summary-stat"><span class="sr-summary-num">' + known + '</span>Known</div>' +
+        '<div class="sr-summary-stat"><span class="sr-summary-num">' + unknown + '</span>Not Known</div>' +
+        '<div class="sr-summary-stat"><span class="sr-summary-num">' + p.s.ms + '</span>Mastered</div>' +
+      '</div>' +
+      '<button class="btn btn-primary" onclick="BE.teaching.srStart()">Next Session</button>' +
+    '</div>'
+}
+
+function srReset() {
+  if (confirm('Reset all progress?')) {
+    srSave(SR_KEY, { w: {}, s: { sc: 0, tl: 0, ms: 0 } })
+    srSave(SR_SESSION_KEY, null)
+    var c = document.getElementById('teaching-content')
+    if (c) renderSR(c)
+  }
+}
+
 // ---- EXPORT ----
 window.BE = window.BE || {}
 window.BE.teaching = {
   renderTeaching, switchTab,
   renderWordCards, filterCards, setCategory, updateCards, goPage,
   renderExercises, selectExercise, showExercise, checkAnswer,
-  renderReference, showWordDetail, playWord
+  renderReference, showWordDetail, playWord,
+  srStart, srResume, srAnswer, srReset
 }
