@@ -48,24 +48,29 @@ let cardCategory = 'all'
 let cardPage = 0
 const CARDS_PER_PAGE = 40
 
-function renderWordCards(container) {
-  const allWords = []
+// Pre-compute flat word list once
+let flatWordList = null
+function getFlatWords() {
+  if (flatWordList) return flatWordList
+  flatWordList = []
   for (const cat of CATEGORIES) {
     for (const w of cat.words) {
-      allWords.push({ word: w, category: cat })
+      flatWordList.push({ word: w, category: cat })
     }
   }
+  return flatWordList
+}
 
+function renderWordCards(container) {
   container.innerHTML = `
     <div class="cards-section">
       <div class="cards-controls">
         <div class="cards-search">
           <input type="text" id="card-search" placeholder="Search words..." value="${cardFilter}" oninput="BE.teaching.filterCards()" />
         </div>
-        <div class="cards-categories">
-          <button class="cat-btn ${cardCategory==='all'?'active':''}" onclick="BE.teaching.setCategory('all')">All</button>
+        <div class="cards-categories" id="cards-categories">
           ${CATEGORIES.map(c =>
-            `<button class="cat-btn ${cardCategory===c.id?'active':''}" onclick="BE.teaching.setCategory('${c.id}')" style="--cat-color:${c.color}">${c.name}</button>`
+            `<button class="cat-btn ${cardCategory===c.id?'active':''}" data-cat="${c.id}" style="--cat-color:${c.color}">${c.name}</button>`
           ).join('')}
         </div>
       </div>
@@ -74,36 +79,42 @@ function renderWordCards(container) {
     </div>
   `
 
+  // Attach category click handler once (delegated)
+  const cats = document.getElementById('cards-categories')
+  if (cats) {
+    cats.onclick = function(e) {
+      const btn = e.target.closest('.cat-btn')
+      if (btn) BE.teaching.setCategory(btn.dataset.cat)
+    }
+  }
+
   BE.teaching.updateCards()
 }
 
 function filterCards() {
   cardFilter = document.getElementById('card-search')?.value?.toLowerCase() || ''
   cardPage = 0
-  const content = document.getElementById('teaching-content')
-  if (content) renderWordCards(content)
+  BE.teaching.updateCards()
 }
 
 function setCategory(cat) {
   cardCategory = cat
   cardPage = 0
-  const content = document.getElementById('teaching-content')
-  if (content) renderWordCards(content)
+  // Update button active states
+  document.querySelectorAll('#cards-categories .cat-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.cat === cat)
+  })
+  BE.teaching.updateCards()
 }
 
 function updateCards() {
-  // Get filtered words
-  let allWords = []
-  for (const cat of CATEGORIES) {
-    for (const w of cat.words) {
-      if (cardCategory === 'all' || cat.id === cardCategory) {
-        allWords.push({ word: w, category: cat })
-      }
-    }
+  // Filter cached word list
+  let allWords = getFlatWords()
+  if (cardCategory !== 'all') {
+    allWords = allWords.filter(function(item) { return item.category.id === cardCategory })
   }
-
   if (cardFilter) {
-    allWords = allWords.filter(item => item.word.includes(cardFilter))
+    allWords = allWords.filter(function(item) { return item.word.includes(cardFilter) })
   }
 
   // Pagination
@@ -112,7 +123,7 @@ function updateCards() {
   const start = cardPage * CARDS_PER_PAGE
   const pageWords = allWords.slice(start, start + CARDS_PER_PAGE)
 
-  // Render grid
+  // Render grid (only this changes)
   const grid = document.getElementById('cards-grid')
   if (!grid) return
 
@@ -122,24 +133,25 @@ function updateCards() {
     return
   }
 
-  grid.innerHTML = pageWords.map(item => {
-    const cat = item.category
-    return `<div class="word-card" style="border-color:${cat.color}" onclick="BE.teaching.showWordDetail('${item.word}')">
-      <div class="word-card-word">${item.word}</div>
-      <div class="word-card-cat" style="background:${cat.color}">${cat.name}</div>
-    </div>`
-  }).join('')
+  var html = ''
+  for (var i = 0; i < pageWords.length; i++) {
+    var item = pageWords[i]
+    var cat = item.category
+    html += '<div class="word-card" style="border-color:' + cat.color + '" onclick="BE.teaching.showWordDetail(\'' + item.word + '\')">' +
+      '<div class="word-card-word">' + item.word + '</div>' +
+      '<div class="word-card-cat" style="background:' + cat.color + '">' + cat.name + '</div>' +
+      '</div>'
+  }
+  grid.innerHTML = html
 
-  // Pagination
+  // Pagination controls
   const pagEl = document.getElementById('cards-pagination')
   if (totalPages <= 1) {
-    pagEl.innerHTML = `<span class="page-info">${allWords.length} words</span>`
+    pagEl.innerHTML = '<span class="page-info">' + allWords.length + ' words</span>'
   } else {
-    pagEl.innerHTML = `
-      <button class="btn btn-sm" onclick="BE.teaching.goPage(-1)" ${cardPage<=0?'disabled':''}>◀ Prev</button>
-      <span class="page-info">${cardPage+1} / ${totalPages} (${allWords.length} words)</span>
-      <button class="btn btn-sm" onclick="BE.teaching.goPage(1)" ${cardPage>=totalPages-1?'disabled':''}>Next ▶</button>
-    `
+    pagEl.innerHTML = '<button class="btn btn-sm" onclick="BE.teaching.goPage(-1)"' + (cardPage <= 0 ? ' disabled' : '') + '>&#9664; Prev</button>' +
+      '<span class="page-info">' + (cardPage + 1) + ' / ' + totalPages + ' (' + allWords.length + ' words)</span>' +
+      '<button class="btn btn-sm" onclick="BE.teaching.goPage(1)"' + (cardPage >= totalPages - 1 ? ' disabled' : '') + '>Next &#9654;</button>'
   }
 }
 
