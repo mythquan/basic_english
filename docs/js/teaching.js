@@ -627,7 +627,11 @@ function srShowCard() {
 function srAnswer(known) {
   var session = srLoad(SR_SESSION_KEY)
   if (!session) return
-  var word = session.words[session.idx]
+  session.answers.push({ w: session.words[session.idx], k: known })
+  session.idx++
+  srSave(SR_SESSION_KEY, session)
+
+  var word = session.words[session.idx - 1]
   var p = srLoad(SR_KEY) || { w: {}, s: { sc: 0, tl: 0, ms: 0 } }
   if (!p.w[word]) { p.w[word] = { l: 0, nr: 0, c: 0, w: 0 }; p.s.tl++ }
   var wp = p.w[word]
@@ -645,18 +649,29 @@ function srAnswer(known) {
     wp.nr = Date.now() + 86400000
   }
   srSave(SR_KEY, p)
-  session.answers.push({ w: word, k: known })
-  session.idx++
-  if (session.idx >= session.words.length) {
+
+  // Visual feedback before next card
+  var area = document.getElementById('sr-area')
+  if (area) {
+    var card = area.querySelector('.sr-card')
+    var btns = area.querySelector('.sr-buttons')
+    if (card) {
+      card.className = 'sr-card sr-card-' + (known ? 'known' : 'unknown')
+      card.innerHTML += '<div class="sr-card-feedback">' + (known ? '&#10003;' : '&#10005;') + '</div>'
+    }
+    if (btns) btns.style.display = 'none'
+  }
+
+  var isDone = session.idx >= session.words.length
+  if (isDone) {
     p.s.sc++
     p.s.ls = new Date().toISOString().slice(0, 10)
     srSave(SR_KEY, p)
-    srSave(SR_SESSION_KEY, session)
-    srShowSummary()
-  } else {
-    srSave(SR_SESSION_KEY, session)
-    srShowCard()
   }
+
+  setTimeout(function() {
+    isDone ? srShowSummary() : srShowCard()
+  }, 500)
 }
 
 function srShowSummary() {

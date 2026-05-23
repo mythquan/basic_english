@@ -731,6 +731,7 @@ body {
 }
 
 .sr-card {
+  position: relative;
   background: var(--surface);
   border: 2px solid var(--border);
   border-radius: var(--radius);
@@ -786,6 +787,43 @@ body {
 
 .sr-btn-yes:hover { opacity: .85; }
 .sr-btn-no:hover { opacity: .85; }
+
+/* Card feedback animations */
+.sr-card-known {
+  border-color: var(--success) !important;
+  animation: pulseKnown .45s ease;
+}
+
+.sr-card-unknown {
+  border-color: var(--danger) !important;
+  animation: pulseUnknown .45s ease;
+}
+
+.sr-card-feedback {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 3rem;
+  font-weight: 800;
+  opacity: .25;
+  pointer-events: none;
+}
+
+.sr-card-known .sr-card-feedback { color: var(--success); }
+.sr-card-unknown .sr-card-feedback { color: var(--danger); }
+
+@keyframes pulseKnown {
+  0% { background: #e8f5e9; transform: scale(1); }
+  40% { background: #c8e6c9; transform: scale(1.015); }
+  100% { background: var(--surface); transform: scale(1); }
+}
+
+@keyframes pulseUnknown {
+  0% { background: #ffebee; transform: scale(1); }
+  40% { background: #ffcdd2; transform: scale(1.015); }
+  100% { background: var(--surface); transform: scale(1); }
+}
 
 .sr-summary { text-align: center; padding: 24px; }
 .sr-summary h3 { font-size: 1.3rem; margin-bottom: 20px; }
