@@ -161,15 +161,167 @@ body {
 /* ---- CHAT ---- */
 .chat-layout {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: calc(100vh - 108px);
-  max-height: 700px;
+  max-height: 750px;
+  gap: 16px;
+}
+
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .chat-settings-bar {
   display: flex;
   gap: 8px;
   padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-scenario {
+  margin-left: auto;
+}
+
+/* ---- SCENARIO SIDEBAR ---- */
+.scenario-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.scenario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: .95rem;
+  background: var(--surface2);
+}
+
+.scenario-close {
+  display: none;
+  border: none;
+  background: transparent;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--text2);
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.scenario-close:hover {
+  color: var(--text);
+}
+
+.scenario-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.scenario-category {
+  padding: 10px 16px 6px;
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+}
+
+.scenario-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: .88rem;
+  border-left: 3px solid transparent;
+  transition: all .15s;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scenario-item:hover {
+  background: var(--surface2);
+  border-left-color: var(--primary);
+}
+
+.scenario-item-en {
+  font-size: .75rem;
+  color: var(--text2);
+}
+
+/* ---- CHAT DIVIDER ---- */
+.chat-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.divider-text {
+  font-size: .8rem;
+  color: var(--text2);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---- MOBILE RESPONSIVE ---- */
+@media (max-width: 900px) {
+  .chat-layout {
+    flex-direction: column;
+    position: relative;
+  }
+
+  .scenario-sidebar {
+    position: fixed;
+    top: 60px;
+    right: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    z-index: 200;
+    border-radius: 0;
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform .25s ease;
+    box-shadow: -4px 0 24px rgba(0,0,0,.1);
+  }
+
+  .scenario-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .scenario-close {
+    display: block;
+  }
+
+  .btn-scenario {
+    margin-left: 0;
+  }
+}
+
+@media (min-width: 901px) {
+  .btn-scenario {
+    display: none;
+  }
 }
 
 .chat-settings {
