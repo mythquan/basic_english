@@ -517,14 +517,7 @@ function showWordDetail(word) {
 }
 
 function playWord(word) {
-  if (!window.speechSynthesis) return
-  try {
-    window.speechSynthesis.cancel()
-    var u = new SpeechSynthesisUtterance(word)
-    u.rate = 0.9
-    u.volume = 1
-    window.speechSynthesis.speak(u)
-  } catch (e) { /* ignore */ }
+  window.BE.speak(word, 0.9)
 }
 
 // ============================================================

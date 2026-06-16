@@ -163,15 +163,7 @@ function appendMessageDOM(container, msg) {
 }
 
 function playSentence(text) {
-  if (!window.speechSynthesis) return
-  try {
-    window.speechSynthesis.cancel()
-    var u = new SpeechSynthesisUtterance(text)
-    u.lang = 'en-US'
-    u.rate = 0.85
-    u.volume = 1
-    window.speechSynthesis.speak(u)
-  } catch (e) { /* ignore */ }
+  window.BE.speak(text, 0.85)
 }
 
 function escapeHtml(text) {

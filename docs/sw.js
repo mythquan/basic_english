@@ -1,17 +1,18 @@
 // Basic English PWA — Service Worker
-const CACHE = 'basic-english-v1'
+const CACHE = 'basic-english-v3'
+// Relative paths so the app works under a sub-path (e.g. /basic_english/)
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/data.js',
-  '/js/validator.js',
-  '/js/chat.js',
-  '/js/teaching.js',
-  '/js/app.js',
-  '/manifest.json',
-  '/icons/icon-192.svg',
-  '/icons/icon-512.svg'
+  './',
+  './index.html',
+  './css/style.css',
+  './js/data.js',
+  './js/validator.js',
+  './js/chat.js',
+  './js/teaching.js',
+  './js/app.js',
+  './manifest.json',
+  './icons/icon-192.svg',
+  './icons/icon-512.svg'
 ]
 
 self.addEventListener('install', e => {
