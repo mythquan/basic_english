@@ -82,26 +82,60 @@ function renderHome(container) {
 //  - voices load asynchronously (getVoices() is empty at first)
 //  - an explicit English voice avoids silent/wrong-language playback
 //  - calling cancel() right before speak() in the same tick is swallowed
+// Android WebView / WeChat browser often have speechSynthesis API but
+// no actual TTS engine — we detect this and hide speak buttons.
 // ============================================================
 var _beVoices = []
+var _beSpeechAvailable = false // true only if TTS actually works
+
 function _beLoadVoices() {
   if (!window.speechSynthesis) return
   _beVoices = window.speechSynthesis.getVoices() || []
+  // If we have voices, speech is likely available
+  if (_beVoices.length > 0) {
+    _beSpeechAvailable = true
+    document.body.classList.add('speech-available')
+    document.body.classList.remove('speech-unavailable')
+  }
 }
-if (window.speechSynthesis) {
+
+function _beInitSpeech() {
+  if (!window.speechSynthesis) {
+    _beSpeechAvailable = false
+    document.body.classList.add('speech-unavailable')
+    return
+  }
+  
   _beLoadVoices()
-  // Fired when voices become available (Firefox/Safari load them async)
-  try { window.speechSynthesis.addEventListener('voiceschanged', _beLoadVoices) }
-  catch (e) { window.speechSynthesis.onvoiceschanged = _beLoadVoices }
+  
+  // Fired when voices become available (Firefox/Safari/some Android load them async)
+  try { 
+    window.speechSynthesis.addEventListener('voiceschanged', _beLoadVoices) 
+  } catch (e) { 
+    window.speechSynthesis.onvoiceschanged = _beLoadVoices 
+  }
+  
+  // Give async voice loading 2 seconds, then check
+  setTimeout(function() {
+    _beLoadVoices()
+    if (_beVoices.length === 0) {
+      // No voices available — TTS won't work
+      _beSpeechAvailable = false
+      document.body.classList.add('speech-unavailable')
+      document.body.classList.remove('speech-available')
+    }
+  }, 2000)
 }
+
 function _bePickEnglishVoice() {
   if (!_beVoices.length) _beLoadVoices()
   return _beVoices.find(function(v) { return /en[-_]US/i.test(v.lang) }) ||
          _beVoices.find(function(v) { return /^en/i.test(v.lang) }) ||
          null
 }
+
 function speak(text, rate) {
-  if (!window.speechSynthesis || !text) return
+  if (!_beSpeechAvailable || !window.speechSynthesis || !text) return false
   try {
     var synth = window.speechSynthesis
     var speakNow = function() {
@@ -122,10 +156,22 @@ function speak(text, rate) {
     } else {
       speakNow()
     }
-  } catch (e) { /* ignore */ }
+    return true
+  } catch (e) { 
+    return false
+  }
 }
+
+function isSpeechAvailable() {
+  return _beSpeechAvailable
+}
+
 window.BE = window.BE || {}
 window.BE.speak = speak
+window.BE.isSpeechAvailable = isSpeechAvailable
+
+// Initialize speech detection on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', _beInitSpeech)
 
 // ---- INIT ----
 document.addEventListener('DOMContentLoaded', function() {

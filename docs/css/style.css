@@ -1045,3 +1045,9 @@ body {
   .chat-message { max-width: 95%; }
   .navbar { padding: 0 12px; overflow-x: auto; }
 }
+
+/* ---- SPEECH UNAVAILABLE (Android WebView, WeChat browser, etc.) ---- */
+body.speech-unavailable .msg-sound,
+body.speech-unavailable .word-sound {
+  display: none !important;
+}

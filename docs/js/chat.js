@@ -356,14 +356,13 @@ function appendMessageDOM(container, msg) {
     warn.textContent = '⚠ Words not in Basic: ' + msg.violations.join(', ')
     div.appendChild(warn)
   }
-  if (window.speechSynthesis) {
-    var sound = document.createElement('span')
-    sound.className = 'msg-sound'
-    sound.textContent = '▶'
-    sound.title = 'Read this out loud'
-    sound.onclick = function() { BE.chat.playSentence(msg.content) }
-    div.appendChild(sound)
-  }
+  // Always add sound button - CSS will hide it if speech unavailable
+  var sound = document.createElement('span')
+  sound.className = 'msg-sound'
+  sound.textContent = '▶'
+  sound.title = 'Read this out loud'
+  sound.onclick = function() { BE.chat.playSentence(msg.content) }
+  div.appendChild(sound)
   container.appendChild(div)
   container.scrollTop = container.scrollHeight
 }
