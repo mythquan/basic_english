@@ -13,8 +13,6 @@ const CATEGORIES = [
 
 // ---- RENDER TEACHING MODE ----
 function renderTeaching(container) {
-  const BE = window.BE.WORDS
-
   container.innerHTML = `
     <div class="teaching-layout">
       <div class="teaching-tabs">
@@ -27,7 +25,7 @@ function renderTeaching(container) {
     </div>
   `
 
-  BE.teaching.switchTab('cards')
+  switchTab('cards')
 }
 
 function switchTab(tab) {
